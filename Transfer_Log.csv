@@ -1,0 +1,20 @@
+Student_ID,Student_Name,Class,From_Section,To_Section,Transfer_Month,Transfer_Reason
+1240,Student_1240,4,A,B,October,Performance Optimization
+1089,Student_1089,2,A,B,January,Disciplinary Action
+1119,Student_1119,2,A,B,September,Disciplinary Action
+1230,Student_1230,4,B,A,October,Parent Request
+1586,Student_1586,10,B,A,January,Disciplinary Action
+1580,Student_1580,10,B,A,January,Peer Group Adjustment
+1460,Student_1460,8,A,B,January,Balancing Section Strength
+1062,Student_1062,1,A,B,December,Peer Group Adjustment
+1281,Student_1281,5,A,B,September,Teacher Recommendation
+1569,Student_1569,10,B,A,January,Parent Request
+1446,Student_1446,8,A,B,September,Performance Optimization
+1177,Student_1177,3,B,A,November,Disciplinary Action
+1599,Student_1599,10,B,A,January,Peer Group Adjustment
+1132,Student_1132,3,B,A,December,Parent Request
+1537,Student_1537,9,B,A,January,Disciplinary Action
+1432,Student_1432,8,A,B,February,Balancing Section Strength
+1584,Student_1584,10,B,A,September,Balancing Section Strength
+1207,Student_1207,4,B,A,February,Disciplinary Action
+1080,Student_1080,2,A,B,November,Disciplinary Action

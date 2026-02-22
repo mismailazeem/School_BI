@@ -1,0 +1,782 @@
+// ============================================================
+// SCHOOL BI SOLUTION – COMPLETE DAX MEASURES LIBRARY
+// Pakistani School System (Classes 1–10, Sections A & B)
+// ============================================================
+// This file contains all DAX measures organized by category,
+// plus calculated column definitions at the end.
+// Optimized for Power BI Desktop (VertiPaq engine).
+// ============================================================
+
+
+// ════════════════════════════════════════════════════════════
+// SECTION 1: ACADEMIC KPIs
+// ════════════════════════════════════════════════════════════
+
+// ── 1.1 Student Counts ──────────────────────────────────────
+
+Total Students = 
+DISTINCTCOUNT(Dim_Students[Student_Key])
+
+Students by Class = 
+CALCULATE(
+    DISTINCTCOUNT(Dim_Students[Student_Key]),
+    ALLEXCEPT(Dim_Students, Dim_Students[Class])
+)
+
+Students by Section = 
+CALCULATE(
+    DISTINCTCOUNT(Dim_Students[Student_Key]),
+    ALLEXCEPT(Dim_Students, Dim_Students[Section])
+)
+
+Male Students = 
+CALCULATE(
+    DISTINCTCOUNT(Dim_Students[Student_Key]),
+    Dim_Students[Gender] = "Male"
+)
+
+Female Students = 
+CALCULATE(
+    DISTINCTCOUNT(Dim_Students[Student_Key]),
+    Dim_Students[Gender] = "Female"
+)
+
+Gender Distribution Male % = 
+DIVIDE([Male Students], [Total Students], 0) * 100
+
+Gender Distribution Female % = 
+DIVIDE([Female Students], [Total Students], 0) * 100
+
+
+// ── 1.2 Score Averages ──────────────────────────────────────
+
+Average Monthly Test Score = 
+AVERAGE(Fact_ExamResults[Monthly_Test_Score])
+
+Average Midterm Score = 
+AVERAGE(Fact_ExamResults[Midterm_Score])
+
+Average Final Score = 
+AVERAGE(Fact_ExamResults[Final_Score])
+
+Average Total Score = 
+AVERAGE(Fact_ExamResults[Total_Score])
+
+Overall Academic Percentage = 
+DIVIDE(
+    SUM(Fact_ExamResults[Total_Score]),
+    SUM(Fact_ExamResults[Max_Total_Possible]),
+    0
+) * 100
+
+// Alternative if Max_Total_Possible is not stored:
+Overall Academic Percentage v2 = 
+DIVIDE(
+    SUM(Fact_ExamResults[Total_Score]),
+    COUNTROWS(Fact_ExamResults) * 250,
+    0
+) * 100
+
+
+// ── 1.3 Grade Classification ────────────────────────────────
+// (Applied as a calculated column on Fact_ExamResults, see Section 7)
+// Measure to count students per grade:
+
+Students with A Plus = 
+CALCULATE(
+    DISTINCTCOUNT(Fact_ExamResults[Student_Key]),
+    Fact_ExamResults[Grade] = "A+"
+)
+
+Students with A = 
+CALCULATE(
+    DISTINCTCOUNT(Fact_ExamResults[Student_Key]),
+    Fact_ExamResults[Grade] = "A"
+)
+
+Students with B = 
+CALCULATE(
+    DISTINCTCOUNT(Fact_ExamResults[Student_Key]),
+    Fact_ExamResults[Grade] = "B"
+)
+
+Students with C = 
+CALCULATE(
+    DISTINCTCOUNT(Fact_ExamResults[Student_Key]),
+    Fact_ExamResults[Grade] = "C"
+)
+
+Students with D = 
+CALCULATE(
+    DISTINCTCOUNT(Fact_ExamResults[Student_Key]),
+    Fact_ExamResults[Grade] = "D"
+)
+
+Students with F = 
+CALCULATE(
+    DISTINCTCOUNT(Fact_ExamResults[Student_Key]),
+    Fact_ExamResults[Grade] = "F"
+)
+
+
+// ── 1.4 Subject-wise Performance ────────────────────────────
+
+Subject Average Score = 
+CALCULATE(
+    AVERAGE(Fact_ExamResults[Percentage]),
+    ALLEXCEPT(Dim_Subject, Dim_Subject[Subject_Name])
+)
+
+Subject Wise Average = 
+AVERAGEX(
+    VALUES(Dim_Subject[Subject_Name]),
+    CALCULATE(AVERAGE(Fact_ExamResults[Percentage]))
+)
+
+
+// ── 1.5 Class & Section Comparison ──────────────────────────
+
+Class Performance Average = 
+CALCULATE(
+    AVERAGE(Fact_ExamResults[Percentage]),
+    ALLEXCEPT(Dim_Class, Dim_Class[Class_Number])
+)
+
+Section A Average = 
+CALCULATE(
+    AVERAGE(Fact_ExamResults[Percentage]),
+    Dim_Section[Section_Name] = "A"
+)
+
+Section B Average = 
+CALCULATE(
+    AVERAGE(Fact_ExamResults[Percentage]),
+    Dim_Section[Section_Name] = "B"
+)
+
+Section Comparison Delta = 
+[Section A Average] - [Section B Average]
+
+
+// ── 1.6 Ranking ─────────────────────────────────────────────
+
+Rank Within Class = 
+RANKX(
+    ALLEXCEPT(Dim_Students, Dim_Students[Class]),
+    [Overall Academic Percentage],,
+    DESC,
+    DENSE
+)
+
+Rank Within Section = 
+RANKX(
+    ALLEXCEPT(Dim_Students, Dim_Students[Class], Dim_Students[Section]),
+    [Overall Academic Percentage],,
+    DESC,
+    DENSE
+)
+
+Overall Rank = 
+RANKX(
+    ALL(Dim_Students),
+    [Overall Academic Percentage],,
+    DESC,
+    DENSE
+)
+
+
+// ── 1.7 Trend Analysis ─────────────────────────────────────
+
+Previous Month Score = 
+CALCULATE(
+    AVERAGE(Fact_ExamResults[Percentage]),
+    DATEADD(Dim_Date[Date_Key], -1, MONTH)
+)
+
+// Month-over-Month Improvement:
+MoM Improvement = 
+VAR CurrentMonth = AVERAGE(Fact_ExamResults[Percentage])
+VAR PrevMonth = 
+    CALCULATE(
+        AVERAGE(Fact_ExamResults[Percentage]),
+        PREVIOUSMONTH(Dim_Date[Date_Key])
+    )
+RETURN
+    IF(
+        NOT ISBLANK(PrevMonth),
+        CurrentMonth - PrevMonth,
+        BLANK()
+    )
+
+MoM Improvement % = 
+DIVIDE([MoM Improvement], [Previous Month Score], 0) * 100
+
+// Academic Semester wise:
+Improvement Trend Index = 
+VAR FirstHalfAvg = 
+    CALCULATE(
+        AVERAGE(Fact_ExamResults[Percentage]),
+        Dim_Date[Sort_Order] <= 5
+    )
+VAR SecondHalfAvg = 
+    CALCULATE(
+        AVERAGE(Fact_ExamResults[Percentage]),
+        Dim_Date[Sort_Order] > 5
+    )
+RETURN
+    SecondHalfAvg - FirstHalfAvg
+
+
+// ── 1.8 Pass/Fail Metrics ───────────────────────────────────
+// Pass = Percentage >= 33% (Pakistani board standard)
+
+Pass Count = 
+CALCULATE(
+    COUNTROWS(Fact_ExamResults),
+    Fact_ExamResults[Percentage] >= 33
+)
+
+Fail Count = 
+CALCULATE(
+    COUNTROWS(Fact_ExamResults),
+    Fact_ExamResults[Percentage] < 33
+)
+
+Pass Percentage = 
+DIVIDE([Pass Count], COUNTROWS(Fact_ExamResults), 0) * 100
+
+Failure Rate = 
+DIVIDE([Fail Count], COUNTROWS(Fact_ExamResults), 0) * 100
+
+Failure Rate per Subject = 
+CALCULATE(
+    DIVIDE(
+        COUNTROWS(FILTER(Fact_ExamResults, Fact_ExamResults[Percentage] < 33)),
+        COUNTROWS(Fact_ExamResults),
+        0
+    ) * 100,
+    ALLEXCEPT(Dim_Subject, Dim_Subject[Subject_Name])
+)
+
+
+// ── 1.9 Performance Distribution ────────────────────────────
+
+High Performer Count = 
+CALCULATE(
+    DISTINCTCOUNT(Dim_Students[Student_Key]),
+    Dim_Students[Performance_Category] = "High"
+)
+
+Average Performer Count = 
+CALCULATE(
+    DISTINCTCOUNT(Dim_Students[Student_Key]),
+    Dim_Students[Performance_Category] = "Average"
+)
+
+Low Performer Count = 
+CALCULATE(
+    DISTINCTCOUNT(Dim_Students[Student_Key]),
+    Dim_Students[Performance_Category] = "Low"
+)
+
+High Performer % = 
+DIVIDE([High Performer Count], [Total Students], 0) * 100
+
+Average Performer % = 
+DIVIDE([Average Performer Count], [Total Students], 0) * 100
+
+Low Performer % = 
+DIVIDE([Low Performer Count], [Total Students], 0) * 100
+
+
+// ── 1.10 Attendance vs Performance Correlation ──────────────
+
+Attendance Performance Correlation = 
+VAR AttendanceTable = 
+    ADDCOLUMNS(
+        VALUES(Dim_Students[Student_Key]),
+        "AvgAttendance", CALCULATE(AVERAGE(Fact_Attendance[Attendance_Percentage])),
+        "AvgPerformance", CALCULATE(AVERAGE(Fact_ExamResults[Percentage]))
+    )
+VAR AvgX = AVERAGEX(AttendanceTable, [AvgAttendance])
+VAR AvgY = AVERAGEX(AttendanceTable, [AvgPerformance])
+VAR Numerator = 
+    SUMX(AttendanceTable, 
+        ([AvgAttendance] - AvgX) * ([AvgPerformance] - AvgY)
+    )
+VAR DenominatorX = 
+    SQRT(SUMX(AttendanceTable, POWER([AvgAttendance] - AvgX, 2)))
+VAR DenominatorY = 
+    SQRT(SUMX(AttendanceTable, POWER([AvgPerformance] - AvgY, 2)))
+RETURN
+    DIVIDE(Numerator, DenominatorX * DenominatorY, 0)
+
+
+// ════════════════════════════════════════════════════════════
+// SECTION 2: ATTENDANCE KPIs
+// ════════════════════════════════════════════════════════════
+
+Average Attendance % = 
+AVERAGE(Fact_Attendance[Attendance_Percentage])
+
+Attendance by Class = 
+CALCULATE(
+    AVERAGE(Fact_Attendance[Attendance_Percentage]),
+    ALLEXCEPT(Dim_Class, Dim_Class[Class_Number])
+)
+
+Low Attendance Students Count = 
+CALCULATE(
+    DISTINCTCOUNT(Fact_Attendance[Student_Key]),
+    FILTER(
+        SUMMARIZE(
+            Fact_Attendance,
+            Fact_Attendance[Student_Key],
+            "AvgAtt", AVERAGE(Fact_Attendance[Attendance_Percentage])
+        ),
+        [AvgAtt] < 75
+    )
+)
+
+Low Attendance Students % = 
+DIVIDE([Low Attendance Students Count], [Total Students], 0) * 100
+
+// Attendance Trend (Monthly):
+Attendance Monthly Trend = 
+CALCULATE(
+    AVERAGE(Fact_Attendance[Attendance_Percentage]),
+    ALLEXCEPT(Dim_Date, Dim_Date[Month_Name])
+)
+
+// Attendance Risk Flag (student-level):
+Attendance Risk Students = 
+VAR RiskTable = 
+    FILTER(
+        ADDCOLUMNS(
+            VALUES(Dim_Students[Student_Key]),
+            "AvgAtt", CALCULATE(AVERAGE(Fact_Attendance[Attendance_Percentage]))
+        ),
+        [AvgAtt] < 75
+    )
+RETURN
+    COUNTROWS(RiskTable)
+
+// Current Month vs Previous Month Attendance:
+Attendance MoM Change = 
+VAR CurrentAtt = AVERAGE(Fact_Attendance[Attendance_Percentage])
+VAR PrevAtt = 
+    CALCULATE(
+        AVERAGE(Fact_Attendance[Attendance_Percentage]),
+        PREVIOUSMONTH(Dim_Date[Date_Key])
+    )
+RETURN
+    CurrentAtt - PrevAtt
+
+
+// ════════════════════════════════════════════════════════════
+// SECTION 3: BUSINESS / FINANCIAL KPIs
+// ════════════════════════════════════════════════════════════
+
+Total Expected Fee = 
+SUM(Fact_Fees[Monthly_Fee])
+
+Total Collected Fee = 
+SUM(Fact_Fees[Amount_Paid])
+
+Fee Collection % = 
+DIVIDE([Total Collected Fee], [Total Expected Fee], 0) * 100
+
+Outstanding Amount = 
+[Total Expected Fee] - [Total Collected Fee]
+
+// Alternative:
+Total Outstanding = 
+SUM(Fact_Fees[Outstanding_Amount])
+
+Paid Count = 
+CALCULATE(
+    COUNTROWS(Fact_Fees),
+    Fact_Fees[Payment_Status] = "Paid"
+)
+
+Unpaid Count = 
+CALCULATE(
+    COUNTROWS(Fact_Fees),
+    Fact_Fees[Payment_Status] = "Unpaid"
+)
+
+Paid vs Unpaid Ratio = 
+DIVIDE([Paid Count], [Unpaid Count], 0)
+
+Revenue by Class = 
+CALCULATE(
+    SUM(Fact_Fees[Amount_Paid]),
+    ALLEXCEPT(Dim_Class, Dim_Class[Class_Number])
+)
+
+Revenue by Section = 
+CALCULATE(
+    SUM(Fact_Fees[Amount_Paid]),
+    ALLEXCEPT(Dim_Section, Dim_Section[Section_Name])
+)
+
+Monthly Revenue Trend = 
+CALCULATE(
+    SUM(Fact_Fees[Amount_Paid]),
+    ALLEXCEPT(Dim_Date, Dim_Date[Month_Name])
+)
+
+// Scholarship Impact:
+Scholarship Students Count = 
+CALCULATE(
+    DISTINCTCOUNT(Dim_Students[Student_Key]),
+    Dim_Students[Scholarship] = "Yes"
+)
+
+Scholarship % = 
+DIVIDE([Scholarship Students Count], [Total Students], 0) * 100
+
+Scholarship Impact on Revenue = 
+VAR ScholarshipRevenue = 
+    CALCULATE(
+        SUM(Fact_Fees[Amount_Paid]),
+        Dim_Students[Scholarship] = "Yes"
+    )
+VAR NonScholarshipRevenue = 
+    CALCULATE(
+        SUM(Fact_Fees[Amount_Paid]),
+        Dim_Students[Scholarship] = "No"
+    )
+RETURN
+    DIVIDE(ScholarshipRevenue, ScholarshipRevenue + NonScholarshipRevenue, 0) * 100
+
+// Teacher Workload Index:
+// (Students per Teacher in context)
+Teacher Workload Index = 
+DIVIDE(
+    [Total Students],
+    DISTINCTCOUNT(Dim_Teachers[Teacher_Key]),
+    0
+)
+
+Teacher Student Ratio = 
+VAR TeacherCount = DISTINCTCOUNT(Dim_Teachers[Teacher_Key])
+VAR StudentCount = [Total Students]
+RETURN
+    FORMAT(DIVIDE(StudentCount, TeacherCount, 0), "0.0") & " : 1"
+
+// Fee Defaulter Count (students who have >=3 unpaid months):
+Fee Defaulters Count = 
+VAR DefaulterTable = 
+    FILTER(
+        ADDCOLUMNS(
+            VALUES(Dim_Students[Student_Key]),
+            "UnpaidMonths", 
+                CALCULATE(
+                    COUNTROWS(FILTER(Fact_Fees, Fact_Fees[Payment_Status] = "Unpaid"))
+                )
+        ),
+        [UnpaidMonths] >= 3
+    )
+RETURN
+    COUNTROWS(DefaulterTable)
+
+Fee Defaulter % = 
+DIVIDE([Fee Defaulters Count], [Total Students], 0) * 100
+
+// Monthly Revenue Growth:
+Revenue MoM Growth = 
+VAR CurrentRevenue = SUM(Fact_Fees[Amount_Paid])
+VAR PrevRevenue = 
+    CALCULATE(
+        SUM(Fact_Fees[Amount_Paid]),
+        PREVIOUSMONTH(Dim_Date[Date_Key])
+    )
+RETURN
+    DIVIDE(CurrentRevenue - PrevRevenue, PrevRevenue, 0) * 100
+
+
+// ════════════════════════════════════════════════════════════
+// SECTION 4: PARENT SURVEY KPIs (Part 7)
+// ════════════════════════════════════════════════════════════
+
+// NPS Score (Net Promoter Score):
+// Promoters: Recommendation_Score >= 9
+// Detractors: Recommendation_Score <= 6
+// NPS = %Promoters - %Detractors
+
+NPS Promoters = 
+CALCULATE(
+    COUNTROWS(Parent_Survey),
+    Parent_Survey[Recommendation_Score] >= 9
+)
+
+NPS Detractors = 
+CALCULATE(
+    COUNTROWS(Parent_Survey),
+    Parent_Survey[Recommendation_Score] <= 6
+)
+
+NPS Passives = 
+CALCULATE(
+    COUNTROWS(Parent_Survey),
+    Parent_Survey[Recommendation_Score] >= 7,
+    Parent_Survey[Recommendation_Score] <= 8
+)
+
+NPS Score = 
+VAR TotalResponses = COUNTROWS(Parent_Survey)
+VAR PromoterPct = DIVIDE([NPS Promoters], TotalResponses, 0) * 100
+VAR DetractorPct = DIVIDE([NPS Detractors], TotalResponses, 0) * 100
+RETURN
+    PromoterPct - DetractorPct
+
+// Satisfaction Index (Average of all 4 ratings):
+Overall Satisfaction Index = 
+AVERAGEX(
+    Parent_Survey,
+    (
+        Parent_Survey[Teaching_Quality_Rating] +
+        Parent_Survey[Discipline_Rating] +
+        Parent_Survey[Communication_Rating] +
+        Parent_Survey[Fee_Satisfaction]
+    ) / 4
+)
+
+Teaching Quality Average = 
+AVERAGE(Parent_Survey[Teaching_Quality_Rating])
+
+Discipline Rating Average = 
+AVERAGE(Parent_Survey[Discipline_Rating])
+
+Communication Rating Average = 
+AVERAGE(Parent_Survey[Communication_Rating])
+
+Fee Satisfaction Average = 
+AVERAGE(Parent_Survey[Fee_Satisfaction])
+
+
+// ════════════════════════════════════════════════════════════
+// SECTION 5: SCHOOL RANKING KPIs (Part 8)
+// ════════════════════════════════════════════════════════════
+
+Weighted Ranking Score = 
+VAR AcademicScore = [Overall Academic Percentage] * 0.40
+VAR AttendanceScore = [Average Attendance %] * 0.20
+VAR RevenueScore = [Fee Collection %] * 0.20
+VAR SatisfactionScore = [Overall Satisfaction Index] * 20 * 0.20   // Scale 1-5 to 0-100
+RETURN
+    AcademicScore + AttendanceScore + RevenueScore + SatisfactionScore
+
+School Rank = 
+RANKX(
+    ALL(School_Comparison),
+    [Weighted Ranking Score],,
+    DESC,
+    DENSE
+)
+
+
+// ════════════════════════════════════════════════════════════
+// SECTION 6: DROPOUT & TRANSFER KPIs (Part 6)
+// ════════════════════════════════════════════════════════════
+
+Dropout Count = 
+COUNTROWS(Dropout_Log)
+
+Dropout Rate = 
+DIVIDE(
+    [Dropout Count],
+    [Total Students],
+    0
+) * 100
+
+Transfer Count = 
+COUNTROWS(Transfer_Log)
+
+Active Students = 
+[Total Students] - [Dropout Count]
+
+// Dropout Risk Prediction (based on low attendance + low performance + fee default):
+Dropout Risk Score = 
+VAR AttScore = 
+    IF(AVERAGE(Fact_Attendance[Attendance_Percentage]) < 70, 3,
+       IF(AVERAGE(Fact_Attendance[Attendance_Percentage]) < 80, 2, 1))
+VAR PerfScore = 
+    IF(AVERAGE(Fact_ExamResults[Percentage]) < 40, 3,
+       IF(AVERAGE(Fact_ExamResults[Percentage]) < 60, 2, 1))
+VAR FeeScore = 
+    IF(DIVIDE(
+        CALCULATE(COUNTROWS(Fact_Fees), Fact_Fees[Payment_Status] = "Unpaid"),
+        COUNTROWS(Fact_Fees), 0) > 0.5, 3, 1)
+RETURN
+    (AttScore + PerfScore + FeeScore) / 3
+
+
+// ════════════════════════════════════════════════════════════
+// SECTION 7: CALCULATED COLUMNS
+// ════════════════════════════════════════════════════════════
+// These are added directly to the respective tables in Power BI.
+// Syntax: TableName[ColumnName] = <expression>
+
+// ── 7.1 Fact_ExamResults: Total Marks ───────────────────────
+// Total score = Monthly_Test + Midterm + Final
+Fact_ExamResults[Total_Score] = 
+    Fact_ExamResults[Monthly_Test_Score] + 
+    Fact_ExamResults[Midterm_Score] + 
+    Fact_ExamResults[Final_Score]
+
+// ── 7.2 Fact_ExamResults: Percentage ────────────────────────
+// Max possible = 50 + 100 + 100 = 250
+Fact_ExamResults[Percentage] = 
+    DIVIDE(
+        Fact_ExamResults[Total_Score],
+        250,
+        0
+    ) * 100
+
+// ── 7.3 Fact_ExamResults: Grade Assignment ──────────────────
+// Pakistani grading scale:
+//   A+ = 90-100%
+//   A  = 80-89%
+//   B  = 70-79%
+//   C  = 60-69%
+//   D  = 50-59%
+//   F  = Below 50%
+Fact_ExamResults[Grade] = 
+    SWITCH(
+        TRUE(),
+        Fact_ExamResults[Percentage] >= 90, "A+",
+        Fact_ExamResults[Percentage] >= 80, "A",
+        Fact_ExamResults[Percentage] >= 70, "B",
+        Fact_ExamResults[Percentage] >= 60, "C",
+        Fact_ExamResults[Percentage] >= 50, "D",
+        "F"
+    )
+
+// ── 7.4 Fact_ExamResults: Performance Band ──────────────────
+Fact_ExamResults[Performance_Band] = 
+    SWITCH(
+        TRUE(),
+        Fact_ExamResults[Percentage] >= 80, "High Performer",
+        Fact_ExamResults[Percentage] >= 50, "Average Performer",
+        "Low Performer"
+    )
+
+// ── 7.5 Fact_ExamResults: Improvement Index ─────────────────
+// Compares current month score to the student's all-time average
+Fact_ExamResults[Improvement_Index] = 
+    VAR CurrentPct = Fact_ExamResults[Percentage]
+    VAR StudentAvg = 
+        CALCULATE(
+            AVERAGE(Fact_ExamResults[Percentage]),
+            ALLEXCEPT(Fact_ExamResults, Fact_ExamResults[Student_Key])
+        )
+    RETURN
+        CurrentPct - StudentAvg
+
+// ── 7.6 Fact_ExamResults: Risk Category ─────────────────────
+Fact_ExamResults[Risk_Category] = 
+    SWITCH(
+        TRUE(),
+        Fact_ExamResults[Percentage] < 33, "Critical Risk",
+        Fact_ExamResults[Percentage] < 50, "High Risk",
+        Fact_ExamResults[Percentage] < 60, "Moderate Risk",
+        "No Risk"
+    )
+
+// ── 7.7 Fact_Fees: Fee Defaulter Flag ───────────────────────
+// A student is flagged if Amount_Paid < Monthly_Fee
+Fact_Fees[Fee_Defaulter_Flag] = 
+    IF(
+        Fact_Fees[Amount_Paid] < Fact_Fees[Monthly_Fee],
+        "Defaulter",
+        "Paid"
+    )
+
+// ── 7.8 Fact_Fees: Outstanding Amount ───────────────────────
+Fact_Fees[Outstanding_Amount] = 
+    Fact_Fees[Monthly_Fee] - Fact_Fees[Amount_Paid]
+
+// ── 7.9 Dim_Students: Dropout Flag ─────────────────────────
+// Based on composite risk: low attendance + low performance + fee default
+Dim_Students[Dropout_Flag] = 
+    VAR AvgAtt = 
+        CALCULATE(AVERAGE(Fact_Attendance[Attendance_Percentage]))
+    VAR AvgPerf = 
+        CALCULATE(AVERAGE(Fact_ExamResults[Percentage]))
+    VAR UnpaidRatio = 
+        DIVIDE(
+            CALCULATE(COUNTROWS(Fact_Fees), Fact_Fees[Payment_Status] = "Unpaid"),
+            CALCULATE(COUNTROWS(Fact_Fees)),
+            0
+        )
+    RETURN
+        IF(
+            AvgAtt < 65 && AvgPerf < 40 && UnpaidRatio > 0.6,
+            "High Dropout Risk",
+            IF(
+                AvgAtt < 75 && AvgPerf < 50,
+                "Moderate Dropout Risk",
+                "Low Risk"
+            )
+        )
+
+// ── 7.10 Fact_Attendance: Attendance Category ───────────────
+Fact_Attendance[Attendance_Category] = 
+    SWITCH(
+        TRUE(),
+        Fact_Attendance[Attendance_Percentage] >= 90, "Excellent",
+        Fact_Attendance[Attendance_Percentage] >= 80, "Good",
+        Fact_Attendance[Attendance_Percentage] >= 75, "Satisfactory",
+        Fact_Attendance[Attendance_Percentage] >= 60, "Low",
+        "Critical"
+    )
+
+// ── 7.11 Dim_Students: Class Rank (Calculated Column) ──────
+Dim_Students[Class_Rank] = 
+    VAR StudentPerf = 
+        CALCULATE(AVERAGE(Fact_ExamResults[Percentage]))
+    VAR ClassStudents = 
+        CALCULATETABLE(
+            ADDCOLUMNS(
+                VALUES(Dim_Students[Student_Key]),
+                "Perf", CALCULATE(AVERAGE(Fact_ExamResults[Percentage]))
+            ),
+            ALLEXCEPT(Dim_Students, Dim_Students[Class])
+        )
+    VAR BetterStudents = 
+        COUNTROWS(FILTER(ClassStudents, [Perf] > StudentPerf))
+    RETURN
+        BetterStudents + 1
+
+// ── 7.12 Dim_Date: Sort Order (Academic Calendar) ───────────
+Dim_Date[Sort_Order] = 
+    SWITCH(
+        Dim_Date[Month_Name],
+        "April", 1,
+        "May", 2,
+        "August", 3,
+        "September", 4,
+        "October", 5,
+        "November", 6,
+        "December", 7,
+        "January", 8,
+        "February", 9,
+        "March", 10
+    )
+
+// ── 7.13 Dim_Date: Academic Quarter ─────────────────────────
+Dim_Date[Academic_Quarter] = 
+    SWITCH(
+        TRUE(),
+        Dim_Date[Sort_Order] <= 3, "Q1",
+        Dim_Date[Sort_Order] <= 5, "Q2",
+        Dim_Date[Sort_Order] <= 7, "Q3",
+        "Q4"
+    )
+
+
+// ════════════════════════════════════════════════════════════
+// END OF DAX LIBRARY
+// ════════════════════════════════════════════════════════════

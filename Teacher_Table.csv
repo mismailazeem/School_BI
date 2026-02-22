@@ -1,0 +1,81 @@
+Teacher_ID,Teacher_Name,Subject,Class_Assigned,Section
+1,Teacher_1,Urdu,1,A
+2,Teacher_2,English,1,A
+3,Teacher_3,Science,1,A
+4,Teacher_4,Math,1,A
+5,Teacher_5,Geography,1,B
+6,Teacher_6,Social Studies,1,B
+7,Teacher_7,Islamiat,1,A
+8,Teacher_8,Computer,1,A
+9,Teacher_9,Urdu,2,B
+10,Teacher_10,English,2,A
+11,Teacher_11,Science,2,A
+12,Teacher_12,Math,2,B
+13,Teacher_13,Geography,2,B
+14,Teacher_14,Social Studies,2,B
+15,Teacher_15,Islamiat,2,B
+16,Teacher_16,Computer,2,A
+17,Teacher_17,Urdu,3,A
+18,Teacher_18,English,3,A
+19,Teacher_19,Science,3,B
+20,Teacher_20,Math,3,A
+21,Teacher_21,Geography,3,A
+22,Teacher_22,Social Studies,3,A
+23,Teacher_23,Islamiat,3,A
+24,Teacher_24,Computer,3,A
+25,Teacher_25,Urdu,4,B
+26,Teacher_26,English,4,B
+27,Teacher_27,Science,4,B
+28,Teacher_28,Math,4,A
+29,Teacher_29,Geography,4,A
+30,Teacher_30,Social Studies,4,B
+31,Teacher_31,Islamiat,4,B
+32,Teacher_32,Computer,4,A
+33,Teacher_33,Urdu,5,A
+34,Teacher_34,English,5,B
+35,Teacher_35,Science,5,A
+36,Teacher_36,Math,5,A
+37,Teacher_37,Geography,5,A
+38,Teacher_38,Social Studies,5,A
+39,Teacher_39,Islamiat,5,A
+40,Teacher_40,Computer,5,B
+41,Teacher_41,Urdu,6,B
+42,Teacher_42,English,6,A
+43,Teacher_43,Science,6,B
+44,Teacher_44,Math,6,A
+45,Teacher_45,Geography,6,B
+46,Teacher_46,Social Studies,6,B
+47,Teacher_47,Islamiat,6,A
+48,Teacher_48,Computer,6,A
+49,Teacher_49,Urdu,7,A
+50,Teacher_50,English,7,B
+51,Teacher_51,Science,7,A
+52,Teacher_52,Math,7,B
+53,Teacher_53,Geography,7,B
+54,Teacher_54,Social Studies,7,A
+55,Teacher_55,Islamiat,7,B
+56,Teacher_56,Computer,7,B
+57,Teacher_57,Urdu,8,A
+58,Teacher_58,English,8,B
+59,Teacher_59,Science,8,A
+60,Teacher_60,Math,8,B
+61,Teacher_61,Geography,8,A
+62,Teacher_62,Social Studies,8,A
+63,Teacher_63,Islamiat,8,B
+64,Teacher_64,Computer,8,A
+65,Teacher_65,Urdu,9,A
+66,Teacher_66,English,9,A
+67,Teacher_67,Science,9,B
+68,Teacher_68,Math,9,A
+69,Teacher_69,Geography,9,B
+70,Teacher_70,Social Studies,9,A
+71,Teacher_71,Islamiat,9,A
+72,Teacher_72,Computer,9,A
+73,Teacher_73,Urdu,10,B
+74,Teacher_74,English,10,A
+75,Teacher_75,Science,10,B
+76,Teacher_76,Math,10,B
+77,Teacher_77,Geography,10,B
+78,Teacher_78,Social Studies,10,B
+79,Teacher_79,Islamiat,10,A
+80,Teacher_80,Computer,10,B

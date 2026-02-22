@@ -1,0 +1,11 @@
+Student_ID,Student_Name,Gender,Class,Section,Admission_Month,Admission_Type,Previous_School
+1611,Student_1611,Male,4,B,November,Mid-Year Transfer,School_13
+1612,Student_1612,Female,8,A,September,Mid-Year Transfer,School_8
+1613,Student_1613,Female,5,B,October,Mid-Year Transfer,School_8
+1614,Student_1614,Male,3,B,August,Mid-Year Transfer,School_4
+1615,Student_1615,Female,3,A,August,Mid-Year Transfer,School_13
+1616,Student_1616,Female,7,B,August,Mid-Year Transfer,School_4
+1617,Student_1617,Male,5,B,October,Mid-Year Transfer,School_14
+1618,Student_1618,Male,3,B,October,Mid-Year Transfer,School_17
+1619,Student_1619,Female,3,A,September,Mid-Year Transfer,School_5
+1620,Student_1620,Male,6,A,October,Mid-Year Transfer,School_16
